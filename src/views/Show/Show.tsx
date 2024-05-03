@@ -13,7 +13,9 @@ const Show: React.FC = () => {
     const [recommendations, setRecommendations] = useState<IMovieResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
-    const [Favorites, setFavorites] = useState<string>('');
+    const [favorites, setFavorites] = useState<string[]>(() => {
+        return JSON.parse(localStorage.getItem('favorites') || '[]');
+    });
 
     const getColor = (vote: number): "red" | "green" | "yellow" => {
         console.log("Vote average:", vote);
@@ -23,57 +25,47 @@ const Show: React.FC = () => {
     };
 
     const addFavorite = () => {
-        const favs = Favorites.length > 0 ? JSON.parse(Favorites): [];
-        const newFavorites = [...favs, id];
-        setFavorites(JSON.stringify(newFavorites));
-        setIsFavorite(true);
-        localStorage.setItem('favorites', JSON.stringify(newFavorites));
+        if (!favorites.includes(id)) {
+            const newFavorites = [...favorites, id];
+            setFavorites(newFavorites);
+            localStorage.setItem('favorites', JSON.stringify(newFavorites));
+            setIsFavorite(true);
+        }
     };
 
     const removeFavorite = () => {
-        const favs = Favorites.length > 0 ? JSON.parse(Favorites): [];
-        let newFavorites = [...favs];
-        newFavorites = newFavorites.filter((e) => e !== id);
-        setFavorites(JSON.stringify(newFavorites));
-        setIsFavorite(false);
+        const newFavorites = favorites.filter(favId => favId !== id);
+        setFavorites(newFavorites);
         localStorage.setItem('favorites', JSON.stringify(newFavorites));
+        setIsFavorite(false);
     };
 
-      useEffect(() => {
-        const favs = localStorage.getItem('favorites') || '';
-        setFavorites(favs);
-        if (favs.includes(String(id))) {
-            setIsFavorite(true);
-        }
+    useEffect(() => {
+        setIsFavorite(favorites.includes(id));
+    }, [id, favorites]);
+
+    useEffect(() => {
         const fetchData = async () => {
-            if (id) {
-                setIsLoading(true);
-                try {
-                    const detailsData = await getDetails(id);
-                    console.log("Detalles de la película cargados:", detailsData);
-                    if (detailsData && detailsData.genres && detailsData.genres.length > 0) {
-                        setMovieDetails(detailsData);
-                    } else {
-                        console.log("No se encontraron géneros para esta película.");
-                        setMovieDetails(null);
-                    }
+            setIsLoading(true);
+            try {
+                const detailsData = await getDetails(id);
+                setMovieDetails(detailsData);
     
-                    const recommendationsData = await getRecommendations(id);
-                    if (recommendationsData && Array.isArray(recommendationsData.results)) {
+                const recommendationsData = await getRecommendations(id);
+                if (recommendationsData && Array.isArray(recommendationsData.results)) {
                     const sortedRecommendations = recommendationsData.results.sort((a: { vote_average: number; }, b: { vote_average: number; }) => b.vote_average - a.vote_average);
                     setRecommendations(sortedRecommendations);
-                    } else {
-                    setRecommendations([]);
-                    }
-    
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                    setMovieDetails(null);
+                } else {
                     setRecommendations([]);
                 }
-                setIsLoading(false);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                setMovieDetails(null);
+                setRecommendations([]);
             }
+            setIsLoading(false);
         };
+    
         fetchData();
     }, [id]);
 
@@ -137,20 +129,20 @@ const Show: React.FC = () => {
                                     <h2 className="text-xl text-gray-800 font-semibold ml-28 mb-3 uppercase">Favorite</h2>
                                     {isFavorite ? (
                                         <div>
-                                            <button onClick={removeFavorite} className='flex items-center justify-center font-semibold bg-sky-600 p-2 rounded-lg ml-28 mb-3 space-x-2 hover:opacity-40'>
+                                            <button onClick={removeFavorite} className='flex items-center justify-center font-semibold bg-red-600 p-2 rounded-lg ml-28 mb-3 space-x-2 hover:opacity-40'>
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-6 h-6">
                                                     <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
                                                 </svg>
-                                                <span className='text-white'>Add to Favorites</span>
+                                                <span className='text-white'>Remove From Favorites</span>
                                             </button>
                                         </div>
                                     ) : (
                                         <div>
-                                            <button onClick={addFavorite} className='flex items-center justify-center font-semibold bg-red-600 p-2 rounded-lg ml-28 mb-3 space-x-2 hover:opacity-40'>
+                                            <button onClick={addFavorite} className='flex items-center justify-center font-semibold bg-sky-600 p-2 rounded-lg ml-28 mb-3 space-x-2 hover:opacity-40'>
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-6 h-6">
                                                     <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
                                                 </svg>
-                                                <span className='text-white'>Remove from Favorites</span>
+                                                <span className='text-white'>Add to Favorites</span>
                                             </button>
                                         </div>
                                     )}
