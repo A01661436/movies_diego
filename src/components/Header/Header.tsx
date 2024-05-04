@@ -13,7 +13,6 @@ const Header = () => {
     <nav className='bg-gray-100'>
       <div className='flex justify-between items-center p-4'>
         <div>
-          {/* Nombre de la página que actúa como enlace al Home */}
           <Link to={ROUTES.HOME} className='text-xl text-gray-700 font-bold'>
             DIEGFLIX
           </Link>

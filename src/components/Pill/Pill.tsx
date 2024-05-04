@@ -6,7 +6,6 @@ interface PillProps {
 }
 
 const Pill: React.FC<PillProps> = ({ title, color }) => {
-  // Mapeo de colores a clases de Tailwind CSS
   const colorClasses = {
     red: "bg-red-500",
     green: "bg-green-500",

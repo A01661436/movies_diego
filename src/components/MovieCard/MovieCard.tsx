@@ -16,7 +16,7 @@ const MovieCard: React.FC<iMovieCard> = ({
 }) => {
     const navigate = useNavigate(); //Hooks
     //useState
-    const poster = IMAGE_SOURCE + posterPath; //Constante
+    const poster = IMAGE_SOURCE + posterPath; //Constants
 
     //Funciones
     const getGenre = (genreId: number): string =>{
